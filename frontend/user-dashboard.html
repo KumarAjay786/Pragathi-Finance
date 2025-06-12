@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="shortcut icon" href="/static/images/favicon.png">
+    <title>User Dashboard</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+
+    <!-- DataTables CSS -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css" />
+
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: rgb(106, 169, 232);
+            overflow-x: hidden;
+        }
+
+        #sidebar {
+            width: 280px;
+            background: #01081e;
+            height: 100vh;
+            position: fixed;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .nav-link {
+            color: rgb(157, 164, 171) !important;
+            padding: 0.75rem 1.5rem;
+            margin: 0.25rem 1rem;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .nav-link:hover {
+            background: #2d2d2d;
+            color: #fff !important;
+        }
+
+        .nav-link.active {
+            background: linear-gradient(45deg, #6366f1, #8b5cf6);
+            color: #fff !important;
+        }
+
+        #content {
+            margin-left: 280px;
+            padding: 2rem;
+            background-color: #f8f9fa;
+            min-height: 100vh;
+        }
+
+        .dashboard-header {
+            background: #fff;
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            margin-bottom: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        @media (max-width: 768px) {
+            #sidebar {
+                width: 100%;
+                height: auto;
+                position: relative;
+            }
+
+            #content {
+                margin-left: 0;
+                padding: 1rem;
+            }
+
+            .dashboard-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="d-flex">
+        <!-- Sidebar -->
+        <nav id="sidebar" class="text-white p-3">
+            <div>
+                <h4 class="text-white mb-4">User Dashboard</h4>
+                <ul class="nav flex-column gap-2">
+                    <li>
+                        <a href="#" class="nav-link active" id="profile-tab">
+                            <i class="fa fa-user me-2"></i>My Profile
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" class="nav-link" id="applications-tab">
+                            <i class="fa fa-clipboard-list me-2"></i>My Applications
+                        </a>
+                    </li>
+                </ul>
+            </div>
+            <div class="p-3">
+                <button id="logoutBtn" class="btn btn-danger w-100">
+                    <i class="fa fa-sign-out-alt me-2"></i>Logout
+                </button>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main id="content" class="flex-grow-1">
+            <div class="dashboard-header">
+                <h2 class="h4 mb-0">Dashboard Overview</h2>
+            </div>
+
+            <!-- Profile Section -->
+            <div id="profile-section">
+                <div class="card">
+                    <div class="card-header">My Profile</div>
+                    <div class="card-body" id="profile-content">
+                        <div class="d-flex align-items-center mb-4">
+                            <div class="profile-avatar bg-primary text-white rounded-circle d-flex align-items-center justify-content-center"
+                                style="width: 60px; height: 60px; font-size: 2rem;">
+                                <span id="profile-initials">--</span>
+                            </div>
+                            <div class="ms-3">
+                                <h5 id="profile-name">Name</h5>
+                                <p class="mb-1" id="profile-email">Email</p>
+                                <p class="mb-1" id="profile-phone">Phone</p>
+                                <p class="mb-1" id="profile-address">Address</p>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-primary mt-2" data-bs-toggle="modal"
+                            data-bs-target="#changePasswordModal">
+                            <i class="fas fa-key me-2"></i>Change Password
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <!-- Change Password Modal (do not remove) -->
+            <div class="modal fade" id="changePasswordModal" tabindex="-1" aria-labelledby="changePasswordModalLabel"
+                aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="changePasswordModalLabel">Change Password</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <form id="changePasswordForm" class="needs-validation" novalidate="">
+                                <div class="mb-3">
+                                    <label for="currentPassword" class="form-label">Current Password</label>
+                                    <input type="password" class="form-control" id="currentPassword" required="">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="newPassword" class="form-label">New Password</label>
+                                    <input type="password" class="form-control" id="newPassword" required="">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="confirmPassword" class="form-label">Confirm New Password</label>
+                                    <input type="password" class="form-control" id="confirmPassword" required="">
+                                </div>
+                                <div class="alert alert-danger d-none" id="passwordError" role="alert"></div>
+                                <div class="alert alert-success d-none" id="passwordSuccess" role="alert"></div>
+                            </form>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            <button type="button" class="btn btn-primary" id="submitPasswordChange">
+                                <i class="fas fa-key me-2"></i>Change Password
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Applications Section -->
+            <div id="applications-section" class="d-none">
+                <div class="card">
+                    <div class="card-header">My Applications</div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table id="applications-table" class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Id</th>
+                                        <th>Application Type</th>
+                                        <th>Date</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                        <!-- Application Details Modal -->
+                        <div class="modal fade" id="applicationDetailsModal" tabindex="-1"
+                            aria-labelledby="applicationDetailsModalLabel" aria-hidden="true">
+                            <div class="modal-dialog modal-lg">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title" id="applicationDetailsModalLabel">Application Details
+                                        </h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                            aria-label="Close"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <form id="applicationDetailsForm">
+                                            <div id="application-details-content"></div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+
+    <script>
+        $(document).ready(function () {
+            const dataTable = $('#applications-table').DataTable({
+                dom: 't', // Only show the table, hide search bar and show entries
+            });
+
+            // Load profile info
+            function loadProfile() {
+                const token = localStorage.getItem('access_token');
+                fetch('/api/profile/', {
+                    headers: {
+                        'Authorization': token ? `Bearer ${token}` : ''
+                    }
+                })
+                    .then(res => res.ok ? res.json() : Promise.reject())
+                    .then(data => {
+                        // Set initials
+                        let initials = (data.name ? data.name.split(' ').map(n => n[0]).join('').toUpperCase() : '--');
+                        $('#profile-initials').text(initials);
+                        $('#profile-name').text(data.name || '-');
+                        $('#profile-email').text(data.email || '-');
+                        $('#profile-phone').text(data.mobile || '-');
+                        $('#profile-address').text(data.address || '-');
+                    })
+                    .catch(() => {
+                        $('#profile-content').html('<p class="text-danger">Unauthorized. Redirecting...</p>');
+                        setTimeout(() => window.location.href = '/login/', 1500);
+                    });
+            }
+
+            function toIST(dateString) {
+                if (!dateString) return '-';
+                const date = new Date(dateString);
+                // Convert to IST (UTC+5:30)
+                return date.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' });
+            }
+
+            function renderApplicationDetails(app, type) {
+                let html = '';
+                if (type === 'Advisory') {
+                    html += `<div class='row'>
+                        <div class='col-md-6 mb-3'><label>Name</label><input class='form-control' value='${app.name || ''}' readonly></div>
+                        <div class='col-md-6 mb-3'><label>Gender</label><input class='form-control' value='${app.gender || ''}' readonly></div>
+                        <div class='col-md-6 mb-3'><label>Date of Birth</label><input class='form-control' value='${app.dob || ''}' readonly></div>
+                        <div class='col-md-6 mb-3'><label>Email</label><input class='form-control' value='${app.email || ''}' readonly></div>
+                        <div class='col-md-6 mb-3'><label>Mobile</label><input class='form-control' value='${app.mobile || ''}' readonly></div>
+                        <div class='col-md-12 mb-3'><label>Address</label><input class='form-control' value='${app.address || ''}' readonly></div>
+                        <div class='col-md-6 mb-3'><label>Interest to Invest</label><input class='form-control' value='${app.interest_invest || ''}' readonly></div>
+                        <div class='col-md-6 mb-3'><label>Interest</label><input class='form-control' value='${app.interest || ''}' readonly></div>
+                        <div class='col-md-6 mb-3'><label>Range of Investment</label><input class='form-control' value='${app.range_investment || ''}' readonly></div>
+                        <div class='col-md-6 mb-3'><label>Expected ROI</label><input class='form-control' value='${app.expected_roi || ''}' readonly></div>
+                        
+                        <div class='col-md-6 mb-3'><label>Duration</label><input class='form-control' value='${app.duration || ''}' readonly></div>
+                       
+                        <div class='col-md-12 mb-3'><label>Created At</label><input class='form-control' value='${toIST(app.created_at)}' readonly></div>
+                    </div>`;
+                } else if (type === 'Financial') {
+                    html += `<div class='row'>
+                        <div class='col-md-6 mb-3'><label>Company Name</label><input class='form-control' value='${app.company_name || ''}' readonly></div>
+                        <div class='col-md-6 mb-3'><label>Legal Status</label><input class='form-control' value='${app.legal_status || ''}' readonly></div>
+                        <div class='col-md-6 mb-3'><label>Contact Person</label><input class='form-control' value='${app.contact_person || ''}' readonly></div>
+                        <div class='col-md-6 mb-3'><label>Email</label><input class='form-control' value='${app.email || ''}' readonly></div>
+                        <div class='col-md-6 mb-3'><label>Mobile</label><input class='form-control' value='${app.mobile || ''}' readonly></div>
+                        <div class='col-md-6 mb-3'><label>City</label><input class='form-control' value='${app.city || ''}' readonly></div>
+                        <div class='col-md-6 mb-3'><label>Country</label><input class='form-control' value='${app.country || ''}' readonly></div>
+                        <div class='col-md-6 mb-3'><label>Nature of Business</label><input class='form-control' value='${app.nature_of_business || ''}' readonly></div>
+                        <div class='col-md-6 mb-3'><label>Net Worth</label><input class='form-control' value='${app.net_worth || ''}' readonly></div>
+                        <div class='col-md-6 mb-3'><label>Last Turnover</label><input class='form-control' value='${app.last_turnover || ''}' readonly></div>
+                        <div class='col-md-6 mb-3'><label>Current Loan Liability</label><input class='form-control' value='${app.current_loan_liability || ''}' readonly></div>
+                        <div class='col-md-6 mb-3'><label>Last IT Paid</label><input class='form-control' value='${app.last_it_paid || ''}' readonly></div>
+                        <div class='col-md-6 mb-3'><label>Fund Looking For</label><input class='form-control' value='${app.fund_looking_for || ''}' readonly></div>
+                        <div class='col-md-6 mb-3'><label>Purpose of Funding</label><input class='form-control' value='${app.purpose_of_funding || ''}' readonly></div>
+                        <div class='col-md-6 mb-3'><label>Nature of Funding</label><input class='form-control' value='${app.nature_of_funding || ''}' readonly></div>
+                        <div class='col-md-6 mb-3'><label>Offered ROI</label><input class='form-control' value='${app.offered_roi || ''}' readonly></div>
+                        <div class='col-md-12 mb-3'><label>Created At</label><input class='form-control' value='${toIST(app.created_at)}' readonly></div>
+                    </div>`;
+                }
+                return html;
+            }
+
+            // Load applications
+            function loadApplications() {
+                const token = localStorage.getItem('access_token');
+                fetch('/api/user-applications/', {
+                    headers: {
+                        'Authorization': token ? `Bearer ${token}` : ''
+                    }
+                })
+                    .then(res => res.ok ? res.json() : Promise.reject())
+                    .then(data => {
+                        dataTable.clear();
+                        (data.advisory_applications || []).forEach((app, index) => {
+                            dataTable.row.add([
+                                app.id || '-',
+                                'Advisory',
+                                toIST(app.date_applied || app.created_at),
+                                `<button class='btn btn-info btn-sm view-details' data-type='Advisory' data-index='${index}'>View</button>`
+                            ]);
+                        });
+                        (data.financial_services || []).forEach((app, index) => {
+                            dataTable.row.add([
+                                app.id || '-',
+                                'Financial',
+                                toIST(app.created_at),
+                                `<button class='btn btn-info btn-sm view-details' data-type='Financial' data-index='${index}'>View</button>`
+                            ]);
+                        });
+                        dataTable.draw();
+
+                        // Store applications in memory for modal view
+                        window._advisoryApps = data.advisory_applications || [];
+                        window._financialApps = data.financial_services || [];
+                    })
+                    .catch(() => {
+                        alert('Unauthorized. Redirecting...');
+                        window.location.href = '/login/';
+                    });
+            }
+
+            // Toggle Sections
+            $('#profile-tab').click(function (e) {
+                e.preventDefault();
+                $('.nav-link').removeClass('active');
+                $(this).addClass('active');
+                $('#profile-section').removeClass('d-none');
+                $('#applications-section').addClass('d-none');
+                loadProfile();
+            });
+
+            $('#applications-tab').click(function (e) {
+                e.preventDefault();
+                $('.nav-link').removeClass('active');
+                $(this).addClass('active');
+                $('#profile-section').addClass('d-none');
+                $('#applications-section').removeClass('d-none');
+                loadApplications();
+            });
+
+            // Add this to your existing JavaScript
+            document.getElementById('submitPasswordChange').addEventListener('click', function () {
+                const currentPassword = document.getElementById('currentPassword').value;
+                const newPassword = document.getElementById('newPassword').value;
+                const confirmPassword = document.getElementById('confirmPassword').value;
+                const errorAlert = document.getElementById('passwordError');
+                const successAlert = document.getElementById('passwordSuccess');
+
+                // Hide any existing alerts
+                errorAlert.classList.add('d-none');
+                successAlert.classList.add('d-none');
+
+                if (newPassword !== confirmPassword) {
+                    errorAlert.textContent = 'New passwords do not match';
+                    errorAlert.classList.remove('d-none');
+                    return;
+                }
+
+                // Send AJAX request to change password (API endpoint)
+                const token = localStorage.getItem('access_token');
+                fetch('/api/change-password/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': token ? `Bearer ${token}` : ''
+                    },
+                    body: JSON.stringify({
+                        current_password: currentPassword,
+                        new_password: newPassword,
+                        confirm_password: confirmPassword
+                    })
+                })
+                    .then(res => res.json().then(data => ({ status: res.status, data })))
+                    .then(({ status, data }) => {
+                        if (status === 200 && data.success) {
+                            document.getElementById('changePasswordForm').reset();
+                            successAlert.textContent = data.message || 'Password changed successfully';
+                            successAlert.classList.remove('d-none');
+                            setTimeout(() => {
+                                $('#changePasswordModal').modal('hide');
+                            }, 2000);
+                        } else {
+                            errorAlert.textContent = data.error || data.message || 'Failed to change password';
+                            errorAlert.classList.remove('d-none');
+                        }
+                    })
+                    .catch(() => {
+                        errorAlert.textContent = 'Error changing password';
+                        errorAlert.classList.remove('d-none');
+                    });
+            });
+
+            // Reset form and alerts when modal is closed
+            $('#changePasswordModal').on('hidden.bs.modal', function () {
+                document.getElementById('changePasswordForm').reset();
+                document.getElementById('passwordError').classList.add('d-none');
+                document.getElementById('passwordSuccess').classList.add('d-none');
+            });
+
+            // Logout
+            $('#logoutBtn').click(() => {
+                localStorage.removeItem('access_token');
+                window.location.href = '/login/';
+            });
+
+            // Delegate click for view-details
+            $('#applications-table tbody').on('click', '.view-details', function () {
+                const type = $(this).data('type');
+                const index = $(this).data('index');
+                let app = null;
+                if (type === 'Advisory') {
+                    app = window._advisoryApps[index];
+                } else if (type === 'Financial') {
+                    app = window._financialApps[index];
+                }
+                if (app) {
+                    $('#application-details-content').html(renderApplicationDetails(app, type));
+                    $('#applicationDetailsModal').modal('show');
+                }
+            });
+
+            // Initial Load
+            loadProfile();
+        });
+    </script>
+</body>
+
+</html>

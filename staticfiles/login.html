@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Login</title>
+    <link rel="shortcut icon" href="/static/images/favicon.png">
+    <link href="/static/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f0f2f5;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+        }
+
+        .login-card {
+            max-width: 400px;
+            margin: 0 auto;
+            padding: 30px;
+            background-color: #fff;
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+            width: 100%;
+        }
+
+        .toggle-password {
+            position: absolute;
+            right: 15px;
+            top: 38px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .form-group {
+            position: relative;
+        }
+
+        .home-link {
+            display: block;
+            text-align: center;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="login-card">
+        <h3 class="text-center mb-4">Login</h3>
+        <form id="loginForm">
+            <div class="mb-3">
+                <label>Email</label>
+                <input type="email" class="form-control" id="email" placeholder="Enter email" required>
+            </div>
+            <div class="form-group mb-3">
+                <label>Password</label>
+                <input type="password" class="form-control" id="password" placeholder="Enter password" required>
+                <span class="toggle-password" onclick="togglePassword('password')">Show</span>
+            </div>
+            <button type="submit" class="btn btn-primary w-100">Login</button>
+            <div class="text-center mt-3">
+                <a href="#" id="forgotPasswordLink">Forgot Password?</a>
+            </div>
+            <div class="text-center mt-3">
+                <button type="button" class="btn btn-danger w-100">Login with Google</button>
+            </div>
+            <p class="text-center mt-3">Don't have an account? <a href="/signup/">Sign up</a></p>
+            <!-- Added home link -->
+            <p class="text-center mt-3 home-link">
+                <a href="/">← Go back to home page</a>
+            </p>
+        </form>
+    </div>
+
+    <script>
+        document.getElementById("loginForm").addEventListener("submit", async function (e) {
+            e.preventDefault();
+
+            const email = document.getElementById("email").value.trim();
+            const password = document.getElementById("password").value;
+
+            try {
+                const response = await fetch("/api/login/", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({ email, password }),
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    localStorage.setItem("access_token", data.access);
+                    localStorage.setItem("refresh_token", data.refresh);
+                    localStorage.setItem("user_role", data.role); // Store user role
+                    console.log("Login successful:", data.role);
+
+
+                    // Redirect based on role
+                    if (data.role === 'admin') {
+                        window.location.href = "/admin_dashboard.html";
+                    } else {
+                        window.location.href = "/user-dashboard.html";
+                    }
+                } else {
+                    alert(data.message || "Login failed");
+                }
+            } catch (error) {
+                console.error("Error:", error);
+                alert("Something went wrong");
+            }
+        });
+
+        // Forgot Password logic
+        document.getElementById('forgotPasswordLink').addEventListener('click', function (e) {
+            e.preventDefault();
+            const email = document.getElementById('email').value.trim();
+            if (!email) {
+                alert('Please enter your email above before requesting a password reset.');
+                return;
+            }
+            fetch('/api/forgot-password/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email })
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        alert(data.message || 'Password reset instructions sent to your email.');
+                    } else {
+                        alert(data.error || data.message || 'Failed to send reset instructions.');
+                    }
+                })
+                .catch(() => {
+                    alert('Failed to send reset instructions.');
+                });
+        });
+
+        function togglePassword(id) {
+            const input = document.getElementById(id);
+            const toggle = input.nextElementSibling;
+            if (input.type === "password") {
+                input.type = "text";
+                toggle.textContent = "Hide";
+            } else {
+                input.type = "password";
+                toggle.textContent = "Show";
+            }
+        }
+    </script>
+
+</body>
+
+</html>

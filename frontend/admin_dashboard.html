@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="shortcut icon" href="/static/images/favicon.png">
+    <title>Admin Dashboard</title>
+
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- DataTables -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: rgb(106, 169, 232);
+            overflow-x: hidden;
+        }
+
+        #sidebar {
+            width: 280px;
+            background: #1a1a1a;
+            height: 100vh;
+            position: fixed;
+            z-index: 1000;
+            box-shadow: 4px 0 15px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .sidebar-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid #2d2d2d;
+            background: #121212;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .nav-link {
+            color: rgb(157, 164, 171) !important;
+            padding: 0.75rem 1.5rem !important;
+            margin: 0.25rem 1rem;
+            border-radius: 8px;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .nav-link:hover {
+            background: #2d2d2d !important;
+            color: #fff !important;
+            transform: translateX(4px);
+        }
+
+        .nav-link.active {
+            background: linear-gradient(45deg, #6366f1, #8b5cf6);
+            color: #fff !important;
+            box-shadow: 0 4px 6px rgba(99, 102, 241, 0.2);
+        }
+
+        #content {
+            margin-left: 280px;
+            min-height: 100vh;
+        }
+
+        .dashboard-header {
+            background: #a272ed;
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            margin-bottom: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .search-bar {
+            width: 300px;
+        }
+
+        .data-table {
+            background: #fff;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        table.dataTable thead th {
+            background: #f8f9fa !important;
+            color: #2d3748 !important;
+            font-weight: 600;
+            padding: 1rem 1.5rem !important;
+            border-bottom: 2px solid #e2e8f0 !important;
+        }
+
+        @media (max-width: 768px) {
+            #sidebar {
+                width: 100%;
+                height: auto;
+                position: relative;
+            }
+
+            #content {
+                margin-left: 0;
+                padding: 1rem;
+            }
+
+            .dashboard-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+
+            .search-bar {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="d-flex" id="viewport">
+        <!-- Sidebar -->
+        <nav id="sidebar" class="bg-dark text-white p-3">
+            <div>
+                <div class="sidebar-header d-flex align-items-center mb-4">
+                    <h4 class="mb-0">Admin Dashboard</h4>
+                </div>
+                <ul class="nav flex-column gap-2">
+                    <li><a href="#" class="nav-link text-white active">
+                            <i class="fa fa-table me-2"></i>Advisory Application</a></li>
+                    <li><a href="#" class="nav-link text-white">
+                            <i class="fa fa-chart-bar me-2"></i>Financial Application</a></li>
+                    <li><a href="#" class="nav-link text-white">
+                            <i class="fa fa-users me-2"></i>User Management</a></li>
+                </ul>
+            </div>
+            <div class="p-3">
+                <a href="#" class="btn btn-danger w-100">
+                    <i class="fa fa-sign-out-alt me-2"></i>Logout
+                </a>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main id="content" class="flex-grow-1 bg-light">
+            <div class="container-fluid p-4">
+                <div class="dashboard-header">
+                    <h2 class="h4 mb-0">Dashboard Overview</h2>
+                    <div class="d-flex align-items-center gap-2">
+                        <input type="text" class="form-control search-bar" placeholder="Search...">
+                        <button class="btn btn-success" id="download-excel-btn" title="Download as Excel"><i
+                                class="fa fa-file me-1"></i>Download</button>
+                    </div>
+                </div>
+
+                <!-- Data Table -->
+                <div class="card shadow-sm">
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table id="data-table" class="table">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Name</th>
+                                        <th>Email</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Dynamic content will be rendered here by JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal for viewing application details -->
+    <div class="modal fade" id="detailsModal" tabindex="-1" aria-labelledby="detailsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="detailsModalLabel">Application Details</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="modalDetailsBody" style="font-size:1.1rem;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+
+    <script>
+        $(document).ready(function () {
+            // Get token from localStorage
+            const token = localStorage.getItem('access_token');
+            if (!token) {
+                window.location.href = '/login.html';
+                return;
+            }
+
+            $('#data-table').DataTable({
+                dom: 't',
+                responsive: true
+            });
+
+            // Logout functionality
+            $(document).on('click', '.btn-danger', function (e) {
+                e.preventDefault();
+                localStorage.removeItem('access_token');
+                window.location.href = '/login.html';
+            });
+
+            // Fetch and display all admin advisory applications
+            function loadAdminAdvisoryApplications() {
+                fetch('/api/admin-applications/?type=advisory', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                })
+                    .then(res => {
+                        if (!res.ok) throw new Error('Unauthorized');
+                        return res.json();
+                    })
+                    .then(data => {
+                        const tbody = $('#data-table tbody');
+                        tbody.empty();
+                        if (data && Array.isArray(data.advisory_applications) && data.advisory_applications.length > 0) {
+                            data.advisory_applications.forEach(app => {
+                                tbody.append(`
+                                <tr>
+                                    <td>${app.id}</td>
+                                    <td>${app.name || ''}</td>
+                                    <td>${app.email || ''}</td>
+                                    <td>
+                                        <button class="btn btn-sm btn-primary view-details" data-app='${JSON.stringify(app).replace(/'/g, "&apos;")}' title="View Details">
+                                            <i class="fas fa-eye"></i> View
+                                        </button>
+                                    </td>
+                                </tr>
+                            `);
+                            });
+                        } else {
+                            tbody.append('<tr><td colspan="4" class="text-center">No advisory applications found.</td></tr>');
+                        }
+                    })
+                    .catch((err) => {
+                        if (err && err.message && err.message.includes('Unauthorized')) {
+                            localStorage.removeItem('access_token');
+                            window.location.href = '/login.html';
+                        } else {
+                            console.error('Error loading advisory applications:', err);
+                            $('#data-table tbody').html('<tr><td colspan="4" class="text-center text-danger">Failed to load advisory applications.</td></tr>');
+                        }
+                    });
+            }
+
+            // Fetch and display all admin financial applications
+            function loadAdminFinancialApplications() {
+                fetch('/api/admin-applications/?type=financial', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                })
+                    .then(res => {
+                        if (!res.ok) throw new Error('Unauthorized');
+                        return res.json();
+                    })
+                    .then(data => {
+                        const tbody = $('#data-table tbody');
+                        tbody.empty();
+                        if (data && Array.isArray(data.financial_services) && data.financial_services.length > 0) {
+                            data.financial_services.forEach(app => {
+                                tbody.append(`
+                                <tr>
+                                    <td>${app.id}</td>
+                                    <td>${app.company_name || ''}</td>
+                                    <td>${app.email || ''}</td>
+                                    <td>
+                                        <button class="btn btn-sm btn-primary view-details" data-app='${JSON.stringify(app).replace(/'/g, "&apos;")}' title="View Details">
+                                            <i class="fas fa-eye"></i> View
+                                        </button>
+                                    </td>
+                                </tr>
+                            `);
+                            });
+                        } else {
+                            tbody.append('<tr><td colspan="4" class="text-center">No financial applications found.</td></tr>');
+                        }
+                    })
+                    .catch((err) => {
+                        if (err && err.message && err.message.includes('Unauthorized')) {
+                            localStorage.removeItem('access_token');
+                            window.location.href = '/login.html';
+                        } else {
+                            $('#data-table tbody').html('<tr><td colspan="4" class="text-center text-danger">Failed to load financial applications.</td></tr>');
+                        }
+                    });
+            }
+
+            // Fetch and display all users who have applied (unique emails)
+            function loadUserManagement() {
+                fetch('/api/admin-applications/', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                })
+                    .then(res => {
+                        if (!res.ok) throw new Error('Unauthorized');
+                        return res.json();
+                    })
+                    .then(data => {
+                        const tbody = $('#data-table tbody');
+                        tbody.empty();
+                        // Collect all emails from both advisory and financial applications
+                        const emailMap = {};
+                        const users = [];
+                        // Helper to get user info from either application type
+                        function getUserInfo(app, type) {
+                            return {
+                                email: app.email,
+                                name: app.name || app.company_name || '',
+                                address: app.address || app.city || '',
+                                country: app.country || '',
+                                created: app.created || app.created_at || '',
+                                type,
+                                avatar: app.avatar || '', // fallback, if you have avatar field
+                            };
+                        }
+                        if (data && Array.isArray(data.advisory_applications)) {
+                            data.advisory_applications.forEach(app => {
+                                if (app.email && !emailMap[app.email]) {
+                                    emailMap[app.email] = true;
+                                    users.push(getUserInfo(app, 'Advisory'));
+                                }
+                            });
+                        }
+                        if (data && Array.isArray(data.financial_services)) {
+                            data.financial_services.forEach(app => {
+                                if (app.email && !emailMap[app.email]) {
+                                    emailMap[app.email] = true;
+                                    users.push(getUserInfo(app, 'Financial'));
+                                }
+                            });
+                        }
+                        if (users.length > 0) {
+                            users.forEach((user, idx) => {
+                                tbody.append(`
+                                <tr class="user-row" data-user='${JSON.stringify(user).replace(/'/g, "&apos;")}' style="cursor:pointer;">
+                                    <td>${idx + 1}</td>
+                                    <td>${user.name}</td>
+                                    <td>${user.email}</td>
+                                    <td>${user.type}</td>
+                                </tr>
+                            `);
+                            });
+                        } else {
+                            tbody.append('<tr><td colspan="4" class="text-center">No users found.</td></tr>');
+                        }
+                    })
+                    .catch((err) => {
+                        if (err && err.message && err.message.includes('Unauthorized')) {
+                            localStorage.removeItem('access_token');
+                            window.location.href = '/login.html';
+                        } else {
+                            $('#data-table tbody').html('<tr><td colspan="4" class="text-center text-danger">Failed to load users.</td></tr>');
+                        }
+                    });
+            }
+
+            // Show user details modal on row click in user management
+            $(document).on('click', '.user-row', function () {
+                const user = $(this).data('user');
+                let avatar = user.avatar ? `<img src="${user.avatar}" class="rounded-circle mb-3" style="width:80px;height:80px;object-fit:cover;">` : `<div class="rounded-circle bg-secondary d-inline-flex align-items-center justify-content-center mb-3" style="width:80px;height:80px;font-size:2.5rem;color:#fff;">${user.name ? user.name[0].toUpperCase() : 'U'}</div>`;
+                let details = `
+                    <div class="text-center">
+                        ${avatar}
+                        <h4 class="mb-1">${user.name || 'N/A'}</h4>
+                        <div class="text-muted mb-2">${user.email}</div>
+                    </div>
+                    <table class="table table-bordered table-striped mt-3">
+                        <tr><th class="bg-light text-end" style="width:40%">Address/City</th><td>${user.address || 'N/A'}</td></tr>
+                        <tr><th class="bg-light text-end">Country</th><td>${user.country || 'N/A'}</td></tr>
+                        <tr><th class="bg-light text-end">First Application Type</th><td>${user.type}</td></tr>
+                        <tr><th class="bg-light text-end">Created</th><td>${user.created ? new Date(user.created).toLocaleString() : 'N/A'}</td></tr>
+                    </table>
+                    <div class="text-center mt-3">
+                        <button class="btn btn-warning reset-password-btn" data-email="${user.email}"><i class="fa fa-key me-1"></i>Reset Password</button>
+                    </div>
+                `;
+                $('#modalDetailsBody').html(details);
+                const modal = new bootstrap.Modal(document.getElementById('detailsModal'));
+                modal.show();
+            });
+
+            $(document).on('click', '.reset-password-btn', function () {
+                const email = $(this).data('email');
+                let userName = '';
+                const modalName = $('#modalDetailsBody h4').text().trim();
+                if (modalName) {
+                    userName = modalName;
+                } else {
+                    userName = $(this).closest('tr').find('td:nth-child(2)').text().trim();
+                }
+
+                if (!confirm(`Are you sure you want to reset the password for ${userName || email} (${email})?`)) return;
+
+                const token = localStorage.getItem('access_token');
+                if (!token) {
+                    alert("Authorization token is missing. Please login again.");
+                    window.location.href = '/login.html';
+                    return;
+                }
+
+                // Directly call reset-user-password with email (no user-by-email lookup)
+                fetch('/api/reset-user-password/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ email: email })
+                })
+                    .then(res => res.json())
+                    .then(data => {
+                        alert(data.message || 'Password reset request sent.');
+                    })
+                    .catch(err => {
+                        console.error('Error:', err);
+                        alert(err.message || 'Failed to reset password.');
+                    });
+            });
+
+
+            // Search functionality for the table
+            $('.search-bar').on('input', function () {
+                const value = $(this).val().toLowerCase();
+                $('#data-table tbody tr').filter(function () {
+                    $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1);
+                });
+            });
+
+            // Download table as Excel
+            $(document).on('click', '#download-excel-btn', function () {
+                // Get table data
+                const table = document.getElementById('data-table');
+                let csv = [];
+                for (let i = 0; i < table.rows.length; i++) {
+                    let row = [], cols = table.rows[i].querySelectorAll('th, td');
+                    for (let j = 0; j < cols.length; j++) {
+                        // Escape quotes
+                        let text = cols[j].innerText.replace(/"/g, '""');
+                        row.push('"' + text + '"');
+                    }
+                    csv.push(row.join(','));
+                }
+                let csvContent = csv.join('\n');
+                // Download as .csv (Excel compatible)
+                let blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                let link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = 'table_data_' + new Date().toISOString().slice(0, 10) + '.csv';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            });
+
+            // Sidebar navigation logic
+            $(document).on('click', '.nav-link', function (e) {
+                e.preventDefault();
+                $('.nav-link').removeClass('active');
+                $(this).addClass('active');
+                const text = $(this).text().trim();
+                if (text.includes('Advisory')) {
+                    // Update table headers for advisory
+                    $('#data-table thead').html(`
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Actions</th>
+                        </tr>
+                    `);
+                    loadAdminAdvisoryApplications();
+                } else if (text.includes('Financial')) {
+                    // Update table headers for financial
+                    $('#data-table thead').html(`
+                        <tr>
+                            <th>ID</th>
+                            <th>Company Name</th>
+                            <th>Email</th>
+                            <th>Actions</th>
+                        </tr>
+                    `);
+                    loadAdminFinancialApplications();
+                } else if (text.includes('User Management')) {
+                    // Update table headers for user management
+                    $('#data-table thead').html(`
+                        <tr>
+                            <th>Id</th>
+                            <th>Name/Company</th>
+                            <th>Email</th>
+                            <th>Application Type</th>
+                        </tr>
+                    `);
+                    loadUserManagement();
+                }
+            });
+
+            // Show full data in modal on view button click
+            $(document).on('click', '.view-details', function () {
+                const app = $(this).data('app');
+                let details = '<div class="table-responsive"><table class="table table-bordered table-striped">';
+                for (const key in app) {
+                    if (Object.prototype.hasOwnProperty.call(app, key)) {
+                        details += `<tr><th class="bg-light text-end" style="width:30%">${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</th><td>${app[key]}</td></tr>`;
+                    }
+                }
+                details += '</table></div>';
+                $('#modalDetailsBody').html(details);
+                const modal = new bootstrap.Modal(document.getElementById('detailsModal'));
+                modal.show();
+            });
+
+            // Initial load: advisory applications (admin)
+            $('#data-table thead').html(`
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Actions</th>
+                </tr>
+            `);
+            loadAdminAdvisoryApplications();
+
+            // Add hover effect for user management rows
+            $(document).on('mouseenter', '.user-row', function () {
+                $(this).addClass('table-active');
+            });
+            $(document).on('mouseleave', '.user-row', function () {
+                $(this).removeClass('table-active');
+            });
+        });
+    </script>
+</body>
+
+</html>

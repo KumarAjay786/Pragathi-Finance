@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Sign Up</title>
+    <link rel="shortcut icon" href="/static/images/favicon.png">
+    <link href="/static/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f0f2f5;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+        }
+
+        .signup-card {
+            max-width: 400px;
+            margin: 0 auto;
+            padding: 30px;
+            background-color: #fff;
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+            width: 90%;
+        }
+
+        .password-wrapper {
+            position: relative;
+        }
+
+        .toggle-password {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            font-size: 14px;
+            user-select: none;
+        }
+
+        .error-message {
+            color: #dc3545;
+            font-size: 0.875em;
+            margin-top: 0.25rem;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="signup-card">
+        <h3 class="text-center mb-4">Create Account</h3>
+        <form id="signupForm" novalidate>
+            <div class="mb-3">
+                <label class="form-label">Full Name</label>
+                <input type="text" class="form-control" id="name" required>
+                <div class="error-message" id="nameError"></div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Email Address</label>
+                <input type="email" class="form-control" id="email" required>
+                <div class="error-message" id="emailError"></div>
+            </div>
+
+            <div class="mb-3 password-wrapper">
+                <label class="form-label">Password</label>
+                <input type="password" class="form-control" id="password" minlength="8" required>
+                <span class="toggle-password" onclick="togglePassword('password')">Show</span>
+                <div class="error-message" id="passwordError"></div>
+            </div>
+
+            <div class="mb-3 password-wrapper">
+                <label class="form-label">Confirm Password</label>
+                <input type="password" class="form-control" id="confirmPassword" minlength="8" required>
+                <span class="toggle-password" onclick="togglePassword('confirmPassword')">Show</span>
+                <div class="error-message" id="confirmPasswordError"></div>
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100">Sign Up</button>
+
+            <div class="text-center mt-4">
+                <p class="mb-2">Already have an account? <a href="/login/" class="text-decoration-none">Log in</a></p>
+                <a href="/" class="text-secondary text-decoration-none">← Return to Home</a>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        function showError(elementId, message) {
+            const errorElement = document.getElementById(elementId);
+            errorElement.textContent = message;
+        }
+
+        function clearErrors() {
+            document.querySelectorAll('.error-message').forEach(el => el.textContent = '');
+        }
+
+        function validateForm() {
+            clearErrors();
+            let isValid = true;
+
+            // Name validation
+            const name = document.getElementById('name').value.trim();
+            if (!name) {
+                showError('nameError', 'Name is required');
+                isValid = false;
+            }
+
+            // Email validation
+            const email = document.getElementById('email').value.trim();
+            if (!email) {
+                showError('emailError', 'Email is required');
+                isValid = false;
+            } else if (!/\S+@\S+\.\S+/.test(email)) {
+                showError('emailError', 'Invalid email format');
+                isValid = false;
+            }
+
+            // Password validation
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+
+            if (password.length < 8) {
+                showError('passwordError', 'Password must be at least 8 characters');
+                isValid = false;
+            }
+
+            if (password !== confirmPassword) {
+                showError('confirmPasswordError', 'Passwords do not match');
+                isValid = false;
+            }
+
+            return isValid;
+        }
+
+        async function handleSignup(event) {
+            event.preventDefault();
+
+            if (!validateForm()) return;
+
+            const userData = {
+                name: document.getElementById('name').value.trim(),
+                email: document.getElementById('email').value.trim(),
+                password: document.getElementById('password').value,
+                password2: document.getElementById('confirmPassword').value,
+                role: "user"
+            };
+
+            try {
+                const response = await fetch('/api/register/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(userData)
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    alert('Registration successful! Please login.');
+                    window.location.href = '/login/';
+                } else {
+                    // Handle backend validation errors
+                    if (data.error) {
+                        Object.entries(data.error).forEach(([field, messages]) => {
+                            const errorId = `${field}Error`;
+                            if (document.getElementById(errorId)) {
+                                showError(errorId, messages.join(', '));
+                            }
+                        });
+                    } else {
+                        alert(data.message || 'Registration failed');
+                    }
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('An error occurred. Please try again.');
+            }
+        }
+
+        function togglePassword(fieldId) {
+            const input = document.getElementById(fieldId);
+            const toggle = input.nextElementSibling;
+            input.type = input.type === 'password' ? 'text' : 'password';
+            toggle.textContent = input.type === 'password' ? 'Show' : 'Hide';
+        }
+
+        // Event Listeners
+        document.getElementById('signupForm').addEventListener('submit', handleSignup);
+    </script>
+
+</body>
+
+</html>
