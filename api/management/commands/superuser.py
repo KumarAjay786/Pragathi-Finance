@@ -8,9 +8,9 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         User = get_user_model()
         # Hardcoded credentials
-        email = 'inquiry@pragathifs.com'
-        password = 'Pragathi@2020'
-        name = 'Admin User'
+        email = 
+        password = 
+        name =
 
         if User.objects.filter(email=email).exists():
             self.stdout.write(self.style.ERROR(
